@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-  <schema id="org.gnome.shell.extensions.hati" path="/org/gnome/shell/extensions/hati/">
+  <schema id="org.gnome.shell.extensions.arcane-cursor" path="/org/gnome/shell/extensions/arcane-cursor/">
     
     <key name="enabled" type="b">
-      <default>false</default>
-      <summary>Enable Hati cursor highlighter</summary>
+      <default>true</default>
+      <summary>Enable the Arcane Cursor aura</summary>
       <description>Master toggle for cursor highlighting</description>
     </key>
     
@@ -246,5 +246,15 @@
       <description>Diameter of the spotlight circle</description>
     </key>
     
+    <!-- Arcane Cursor (realm.watch) -->
+    <key name="migrated-from-hati" type="b"><default>false</default><summary>One-time copy of the upstream Hati settings has run</summary></key>
+    <key name="arcane-trail" type="b"><default>true</default><summary>Spell-mote trail behind a moving cursor</summary></key>
+    <key name="arcane-runes" type="b"><default>true</default><summary>Rune ring on click (distinct glyph per button)</summary></key>
+    <key name="arcane-pulse" type="b"><default>true</default><summary>Arcane pulse to find the cursor on a shake</summary></key>
+    <key name="realm-pulse" type="b"><default>false</default><summary>Tint the aura from realm health (opt-in)</summary></key>
+    <key name="realm-status-url" type="s"><default>"http://familiar.lan/status"</default><summary>realmwatch status URL for the realm pulse (polled at most every 30 s)</summary></key>
+    <key name="recording-auto-subtle" type="b"><default>true</default><summary>Go subtle automatically while the screen is being cast or recorded (OBS, portals)</summary></key>
+    <key name="subtle-toggle-key" type="as"><default><![CDATA[['<Super><Alt>c']]]></default><summary>Toggle subtle mode</summary></key>
+    <key name="recording-subtle" type="b"><default>false</default><summary>Subtle mode: fewer, fainter arcane effects (for recording)</summary></key>
   </schema>
 </schemalist>

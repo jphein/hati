@@ -27,6 +27,8 @@ import { Magnifier } from "./modules/magnifier.js";
 import { AutoHide } from "./modules/auto-hide.js";
 import Indicator from "./modules/indicator.js";
 import { Spotlight } from "./modules/spotlight.js";
+import { Arcane } from "./modules/arcane.js";
+import { RealmPulse } from "./modules/realm-pulse.js";
 
 export default class HatiExtension extends Extension {
   constructor(metadata) {
@@ -40,11 +42,12 @@ export default class HatiExtension extends Extension {
   }
 
   async enable() {
-    console.log("[Hati] Enabling cursor highlighter...");
+    console.log("[Arcane] Enabling cursor highlighter...");
 
     await initShaders(this.path);
 
     this._settings = this.getSettings();
+    this._migrateFromHati();
     this._interfaceSettings = new Gio.Settings({
       schema_id: "org.gnome.desktop.interface",
     });
@@ -71,7 +74,7 @@ export default class HatiExtension extends Extension {
     this._indicator = new Indicator(this.path, this._settings, () => {
       this.openPreferences();
     });
-    Main.panel.addToStatusArea("hati", this._indicator);
+    Main.panel.addToStatusArea("arcane-cursor", this._indicator);
 
     // only proceed if enabled
     if (!this._settings.get_boolean("enabled")) {
@@ -83,11 +86,11 @@ export default class HatiExtension extends Extension {
 
     this._createHighlightActor();
 
-    console.log("[Hati] Enabled successfully");
+    console.log("[Arcane] Enabled successfully");
   }
 
   disable() {
-    console.log("[Hati] Disabling cursor highlighter...");
+    console.log("[Arcane] Disabling cursor highlighter...");
 
     if (this._indicator) {
       this._indicator.destroy();
@@ -113,7 +116,7 @@ export default class HatiExtension extends Extension {
       this._interfaceSettings = null;
     }
 
-    console.log("[Hati] Disabled successfully");
+    console.log("[Arcane] Disabled successfully");
   }
 
   _createHighlightActor() {
@@ -174,6 +177,37 @@ export default class HatiExtension extends Extension {
     );
 
     this._spotlight = new Spotlight(this._settings);
+    this._arcane = new Arcane(this._settings, this._interfaceSettings);
+    this._casting = 0; // active screen-cast handles (OBS, portals)
+    this._applySubtle();
+    this._realmTint = null;
+    this._realmPulse = new RealmPulse(this._settings, (rgb) => this._setRealmTint(rgb));
+
+    // recording-friendly: Mutter creates a remote-access handle per screen cast (OBS on Wayland
+    // goes through the portal), so this is event-driven and costs nothing when nobody records.
+    try {
+      this._rac = global.backend.get_remote_access_controller();
+      this._racId = this._rac.connect("new-handle", (_c, handle) => {
+        this._casting++;
+        this._applySubtle();
+        handle.connect("stopped", () => {
+          this._casting = Math.max(0, this._casting - 1);
+          this._applySubtle();
+        });
+      });
+    } catch (e) {
+      this._rac = null;
+    }
+    // the one-key toggle
+    try {
+      Main.wm.addKeybinding("subtle-toggle-key", this._settings, Meta.KeyBindingFlags.NONE,
+        Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW, () => {
+          this._settings.set_boolean("recording-subtle", !this._settings.get_boolean("recording-subtle"));
+        });
+      this._keybound = true;
+    } catch (e) {
+      this._keybound = false;
+    }
 
     this._refreshStyle();
 
@@ -182,7 +216,7 @@ export default class HatiExtension extends Extension {
     this._startFrameLoop();
   }
 
-  // hati-realm: event-driven updates instead of a perpetual 16 ms GLib tick.
+  // Arcane Cursor: event-driven updates instead of a perpetual 16 ms GLib tick.
   // The physics/animation step runs on the stage frame clock (a Clutter.Timeline bound to our
   // actor) only while something is moving, and stops as soon as the state settles. Upstream's
   // unconditional timeout moved the actor 60 times a second forever, so the compositor redrew the
@@ -248,6 +282,49 @@ export default class HatiExtension extends Extension {
     this._cursorMovedId = 0;
   }
 
+  // One-time, read-only migration: if our own path (/org/gnome/shell/extensions/arcane-cursor/) has
+  // never been written, copy JP's upstream Hati values (/org/gnome/shell/extensions/hati/) for every
+  // key we share. `dconf dump` runs asynchronously, so enabling never waits on it; the old path is
+  // only read.
+  _migrateFromHati() {
+    const s = this._settings;
+    if (s.get_boolean("migrated-from-hati")) return;
+    const keys = s.settings_schema.list_keys();
+    if (keys.some((k) => k !== "migrated-from-hati" && s.get_user_value(k) !== null)) {
+      s.set_boolean("migrated-from-hati", true); // ours already has values: never overwrite them
+      return;
+    }
+    try {
+      const proc = Gio.Subprocess.new(
+        ["dconf", "dump", "/org/gnome/shell/extensions/hati/"],
+        Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_SILENCE,
+      );
+      proc.communicate_utf8_async(null, null, (p, res) => {
+        try {
+          const [, out] = p.communicate_utf8_finish(res);
+          let copied = 0;
+          for (const line of (out || "").split("\n")) {
+            const m = line.match(/^([a-z0-9-]+)=(.*)$/);
+            if (!m || !keys.includes(m[1]) || m[1] === "migrated-from-hati") continue;
+            try {
+              const type = s.settings_schema.get_key(m[1]).get_value_type();
+              s.set_value(m[1], GLib.Variant.parse(type, m[2], null, null));
+              copied++;
+            } catch (e) {
+              // a value that no longer parses for our schema: keep our default
+            }
+          }
+          console.log(`[Arcane] migrated ${copied} settings from Hati`);
+        } catch (e) {
+          // dconf unavailable: keep defaults
+        }
+        s.set_boolean("migrated-from-hati", true);
+      });
+    } catch (e) {
+      s.set_boolean("migrated-from-hati", true);
+    }
+  }
+
   _updatePhysicsConstants() {
     if (this._physics) {
       this._physics.updateConstants();
@@ -281,6 +358,20 @@ export default class HatiExtension extends Extension {
         this._spotlight.destroy();
         this._spotlight = null;
       }
+
+      if (this._arcane) {
+        this._arcane.destroy();
+        this._arcane = null;
+      }
+      if (this._realmPulse) {
+        this._realmPulse.destroy();
+        this._realmPulse = null;
+      }
+      if (this._rac && this._racId) this._rac.disconnect(this._racId);
+      this._rac = null;
+      this._racId = 0;
+      if (this._keybound) Main.wm.removeKeybinding("subtle-toggle-key");
+      this._keybound = false;
 
       if (this._autoHide) {
         this._autoHide = null;
@@ -348,6 +439,10 @@ export default class HatiExtension extends Extension {
       this._spotlight.update(curX, curY);
     }
 
+    if (this._arcane) {
+      this._arcane.update(pointerX, pointerY, mask, nowUs / 1000);
+    }
+
     if (!this._clickState) {
       this._clickState = {
         active: false,
@@ -411,7 +506,7 @@ export default class HatiExtension extends Extension {
       this._containerActor.set_position(px, py);
     }
 
-    // hati-realm: an auto-hidden highlight is invisible (opacity 0), so cycling its hue is a
+    // Arcane Cursor: an auto-hidden highlight is invisible (opacity 0), so cycling its hue is a
     // 60 Hz Cairo repaint nobody sees. On katana (rgb-enabled, size 200, glow 100) that was the
     // idle cost. Resume the cycle on the next wake, when auto-hide shows it again.
     const hidden = this._autoHide && this._autoHide.isHidden();
@@ -471,6 +566,10 @@ export default class HatiExtension extends Extension {
       }
     }
 
+    if ((key === "recording-subtle" || key === "recording-auto-subtle") && this._arcane) {
+      this._applySubtle();
+    }
+
     if (key === "rgb-enabled") {
       this._rgbEnabled = this._settings.get_boolean("rgb-enabled");
     }
@@ -498,6 +597,27 @@ export default class HatiExtension extends Extension {
     this._canvas.queue_repaint();
 
     this._containerActor.set_opacity(255);
+  }
+
+  _applySubtle() {
+    if (!this._arcane) return;
+    const auto = this._settings.get_boolean("recording-auto-subtle") && this._casting > 0;
+    this._arcane.setSubtle(this._settings.get_boolean("recording-subtle") || auto);
+  }
+
+  // Realm pulse: tint the arcane effects, and the aura itself unless RGB mode owns its colour.
+  _setRealmTint(rgb) {
+    this._realmTint = rgb;
+    if (this._arcane) this._arcane.setTint(rgb);
+    if (!this._rgbEnabled) {
+      this._refreshStyle();
+      if (rgb && this._drawSettings && this._drawSettings.color) {
+        this._drawSettings.color.red = rgb[0];
+        this._drawSettings.color.green = rgb[1];
+        this._drawSettings.color.blue = rgb[2];
+        this._canvas?.queue_repaint();
+      }
+    }
   }
 
   _drawHighlight(area) {

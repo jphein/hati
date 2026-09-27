@@ -116,7 +116,7 @@ export const PresetsPage = GObject.registerClass(
                   }
                 } else {
                   console.error(
-                    "[Hati] Import failed: load_contents_finish returned success=false or empty contents",
+                    "[Arcane] Import failed: load_contents_finish returned success=false or empty contents",
                   );
                   const toast = new Adw.Toast({
                     title: "Import failed: Empty or unreadable file",
@@ -125,7 +125,7 @@ export const PresetsPage = GObject.registerClass(
                   if (root && root.add_toast) root.add_toast(toast);
                 }
               } catch (e) {
-                console.error(`[Hati] Import failed with error: ${e}`);
+                console.error(`[Arcane] Import failed with error: ${e}`);
                 const toast = new Adw.Toast({
                   title: "Import failed: Invalid file",
                 });
@@ -148,7 +148,7 @@ export const PresetsPage = GObject.registerClass(
       if (this._userPresetsGroup) this.remove(this._userPresetsGroup);
 
       this._builtInGroup = new Adw.PreferencesGroup({
-        title: "Hati Collections",
+        title: "Arcane Collections",
         description: "Built-in presets",
       });
       this.add(this._builtInGroup);

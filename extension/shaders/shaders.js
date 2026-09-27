@@ -34,16 +34,16 @@ function loadShaderAsync(extensionPath, filename) {
             _shaderCache[cacheKey] = content;
             resolve(content);
           } else {
-            console.error(`[Hati Shaders] Failed to load: ${filename}`);
+            console.error(`[Arcane Shaders] Failed to load: ${filename}`);
             resolve("");
           }
         } catch (e) {
-          console.error(`[Hati Shaders] Error loading ${filename}: ${e}`);
+          console.error(`[Arcane Shaders] Error loading ${filename}: ${e}`);
           resolve("");
         }
       });
     } catch (e) {
-      console.error(`[Hati Shaders] Error loading ${filename}: ${e}`);
+      console.error(`[Arcane Shaders] Error loading ${filename}: ${e}`);
       resolve("");
     }
   });
@@ -81,7 +81,7 @@ export async function initShaders(extensionPath) {
     code: spotlightCode,
   };
 
-  console.log("[Hati Shaders] All shaders initialized");
+  console.log("[Arcane Shaders] All shaders initialized");
 }
 
 /**
@@ -92,7 +92,7 @@ export async function initShaders(extensionPath) {
 export function getShaderDeclarations(shaderName) {
   const shader = _loadedShaders[shaderName];
   if (!shader) {
-    console.error(`[Hati Shaders] Shader not found: ${shaderName}`);
+    console.error(`[Arcane Shaders] Shader not found: ${shaderName}`);
     return "";
   }
   return shader.declarations;
@@ -106,7 +106,7 @@ export function getShaderDeclarations(shaderName) {
 export function getShaderCode(shaderName) {
   const shader = _loadedShaders[shaderName];
   if (!shader) {
-    console.error(`[Hati Shaders] Shader not found: ${shaderName}`);
+    console.error(`[Arcane Shaders] Shader not found: ${shaderName}`);
     return "";
   }
   return shader.code;

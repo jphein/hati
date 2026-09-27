@@ -15,7 +15,7 @@ import {
 const Indicator = GObject.registerClass(
   class Indicator extends PanelMenu.Button {
     constructor(extensionPath, settings, openSettingsCallback) {
-      super(0.0, _("Hati Indicator"));
+      super(0.0, _("Arcane Cursor"));
       this._settings = settings;
       this._openSettingsCallback = openSettingsCallback;
 
@@ -23,7 +23,7 @@ const Indicator = GObject.registerClass(
         style_class: "panel-status-menu-box",
       });
 
-      const iconPath = extensionPath + "/assets/hati-symbolic.svg";
+      const iconPath = extensionPath + "/assets/arcane-symbolic.svg";
       const gicon = Gio.icon_new_for_string(iconPath);
 
       this._icon = new St.Icon({
@@ -38,7 +38,7 @@ const Indicator = GObject.registerClass(
 
     _buildMenu() {
       this._enableSwitch = new PopupMenu.PopupSwitchMenuItem(
-        _("Enable Hati"),
+        _("Enable Arcane Cursor"),
         this._settings.get_boolean("enabled"),
       );
       this._enableSwitch.connect("toggled", (item, state) => {

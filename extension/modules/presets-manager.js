@@ -44,8 +44,10 @@ export class PresetsManager {
 
     this._configDir = GLib.build_filenamev([
       GLib.get_user_config_dir(),
-      "hati",
+      "arcane-cursor",
     ]);
+    // one-time, read-only: carry over upstream Hati's saved presets if we have none yet
+    this._legacyPresetsFile = GLib.build_filenamev([GLib.get_user_config_dir(), "hati", "presets.json"]);
     this._presetsFile = GLib.build_filenamev([this._configDir, "presets.json"]);
 
     this._ensureConfigDir();
@@ -58,9 +60,18 @@ export class PresetsManager {
         dir.make_directory_with_parents(null);
       } catch (e) {
         console.error(
-          `[Hati Presets] Failed to create config dir: ${e.message}`,
+          `[Arcane Presets] Failed to create config dir: ${e.message}`,
         );
       }
+    }
+    // one-time, read-only copy of upstream Hati's presets (never written or removed)
+    try {
+      const mine = Gio.File.new_for_path(this._presetsFile);
+      const theirs = Gio.File.new_for_path(this._legacyPresetsFile);
+      if (!mine.query_exists(null) && theirs.query_exists(null))
+        theirs.copy(mine, Gio.FileCopyFlags.NONE, null, null);
+    } catch (e) {
+      // no legacy presets: nothing to carry over
     }
   }
 
@@ -84,14 +95,14 @@ export class PresetsManager {
             resolve(JSON.parse(jsonString));
           } catch (e) {
             console.error(
-              `[Hati Presets] Failed to load user presets: ${e.message}`,
+              `[Arcane Presets] Failed to load user presets: ${e.message}`,
             );
             resolve({});
           }
         });
       });
     } catch (e) {
-      console.error(`[Hati Presets] Failed to load user presets: ${e.message}`);
+      console.error(`[Arcane Presets] Failed to load user presets: ${e.message}`);
       return {};
     }
   }
@@ -105,7 +116,7 @@ export class PresetsManager {
   }
 
   async savePreset(name) {
-    console.log(`[Hati Presets] Saving preset: ${name}`);
+    console.log(`[Arcane Presets] Saving preset: ${name}`);
     const currentConfig = {};
 
     this._keys.forEach((key) => {
@@ -122,20 +133,20 @@ export class PresetsManager {
     presets[name] = currentConfig;
 
     const success = await this._writePresets(presets);
-    console.log(`[Hati Presets] Save result: ${success}`);
+    console.log(`[Arcane Presets] Save result: ${success}`);
     return success;
   }
 
   async saveExternalPreset(name, config) {
     if (!config || typeof config !== "object") {
-      console.error("[Hati Presets] Invalid config object");
+      console.error("[Arcane Presets] Invalid config object");
       return false;
     }
 
     const keys = Object.keys(config);
 
     if (keys.length === 0) {
-      console.warn("[Hati Presets] Warning: Imported configuration is empty.");
+      console.warn("[Arcane Presets] Warning: Imported configuration is empty.");
     }
 
     const presets = await this.getPresets();
@@ -145,7 +156,7 @@ export class PresetsManager {
   }
 
   async applyPreset(name) {
-    console.log(`[Hati Presets] Applying preset: ${name}`);
+    console.log(`[Arcane Presets] Applying preset: ${name}`);
 
     let preset = (await this.getUserPresets())[name];
     if (!preset) {
@@ -153,13 +164,13 @@ export class PresetsManager {
     }
 
     if (!preset) {
-      console.error(`[Hati Presets] Preset not found: ${name}`);
+      console.error(`[Arcane Presets] Preset not found: ${name}`);
       return false;
     }
 
     const presetKeys = Object.keys(preset);
     console.log(
-      `[Hati Presets] Preset data found. Keys in preset: ${presetKeys.join(", ")}`,
+      `[Arcane Presets] Preset data found. Keys in preset: ${presetKeys.join(", ")}`,
     );
 
     this._keys.forEach((key) => {
@@ -183,11 +194,11 @@ export class PresetsManager {
             this._settings.set_double(key, doubleVal);
           } else {
             console.warn(
-              `[Hati Presets] Unsupported schema type: ${schemaType} for key ${key}`,
+              `[Arcane Presets] Unsupported schema type: ${schemaType} for key ${key}`,
             );
           }
         } catch (e) {
-          console.error(`[Hati Presets] Failed to set ${key}: ${e.message}`);
+          console.error(`[Arcane Presets] Failed to set ${key}: ${e.message}`);
         }
       } else {
         this._settings.reset(key);
@@ -198,7 +209,7 @@ export class PresetsManager {
   }
 
   async deletePreset(name) {
-    console.log(`[Hati Presets] Deleting preset: ${name}`);
+    console.log(`[Arcane Presets] Deleting preset: ${name}`);
     const presets = await this.getPresets();
     if (presets[name]) {
       delete presets[name];
@@ -228,7 +239,7 @@ export class PresetsManager {
               resolve(success);
             } catch (e) {
               console.error(
-                `[Hati Presets] Failed to write presets: ${e.message}`,
+                `[Arcane Presets] Failed to write presets: ${e.message}`,
               );
               resolve(false);
             }
@@ -236,7 +247,7 @@ export class PresetsManager {
         );
       });
     } catch (e) {
-      console.error(`[Hati Presets] Failed to write presets: ${e.message}`);
+      console.error(`[Arcane Presets] Failed to write presets: ${e.message}`);
       return false;
     }
   }

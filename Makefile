@@ -1,6 +1,6 @@
 .PHONY: all install-extension clean package deploy-remote
 
-EXTENSION_UUID = hati-realm@jphein.github.io
+EXTENSION_UUID = arcane-cursor@jphein.github.io
 EXTENSION_DIR = extension
 REMOTE_HOST = wolfie@dionisus.local
 REMOTE_EXT_DIR = .local/share/gnome-shell/extensions/$(EXTENSION_UUID)
@@ -11,6 +11,7 @@ all: install
 # targets
 install:
 	@echo "📦 Installing extension locally..."
+	@rm -rf ~/.local/share/gnome-shell/extensions/$(EXTENSION_UUID)
 	@mkdir -p ~/.local/share/gnome-shell/extensions/$(EXTENSION_UUID)
 	@cp -r $(EXTENSION_DIR)/* ~/.local/share/gnome-shell/extensions/$(EXTENSION_UUID)/
 	@glib-compile-schemas ~/.local/share/gnome-shell/extensions/$(EXTENSION_UUID)/schemas/

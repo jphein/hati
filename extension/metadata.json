@@ -1,7 +1,7 @@
 {
-  "name": "Hati Cursor Highlighter (realm)",
-  "description": "Cursor highlighting for presentations and screen recording. Fork of Hati by Szymon Wilczek: event-driven frame loop (no idle redraws) and no disposed-window-actor access.",
-  "uuid": "hati-realm@jphein.github.io",
+  "name": "Arcane Cursor",
+  "description": "A realm.watch cursor: aura, spell-mote trail, rune rings on click, an arcane pulse to find the cursor, and an opt-in realm-health tint. Fork of Hati by Szymon Wilczek; event-driven, near-zero idle CPU.",
+  "uuid": "arcane-cursor@jphein.github.io",
   "shell-version": [
     "48",
     "49",
@@ -9,7 +9,7 @@
   ],
   "version": 5,
   "url": "https://github.com/jphein/hati",
-  "settings-schema": "org.gnome.shell.extensions.hati",
+  "settings-schema": "org.gnome.shell.extensions.arcane-cursor",
   "donations": {
     "github": "szymonwilczek"
   }

@@ -70,7 +70,7 @@ export class AutoHide {
   }
 
   /**
-   * True while the stationary countdown to hiding is still running (hati-realm: the frame loop
+   * True while the stationary countdown to hiding is still running (Arcane Cursor: the frame loop
    * must keep ticking until the highlight hides, then it may sleep).
    */
   isPending() {

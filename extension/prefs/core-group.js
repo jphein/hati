@@ -10,7 +10,7 @@ export function buildCoreGroup(settings) {
   });
 
   const enableRow = new Adw.SwitchRow({
-    title: "Enable Hati",
+    title: "Enable Arcane Cursor",
     subtitle: "Show cursor highlight",
   });
   settings.bind("enabled", enableRow, "active", Gio.SettingsBindFlags.DEFAULT);
