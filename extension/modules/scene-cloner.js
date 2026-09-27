@@ -21,6 +21,49 @@ export class SceneCloner {
   }
 
   /**
+   * hati-realm: a window clone watches its source actor. When the window closes, Mutter disposes
+   * the MetaWindowActor; upstream kept the clone (and `_sourceActor`) until the next 500 ms
+   * rebuild and read `.x`/`.y` from the disposed actor every frame ("MetaWindowActorWayland …
+   * has been already disposed", scene-cloner.js:90). Now the clone is dropped on the source's
+   * `destroy`, and its handler is disconnected while the source is still alive.
+   */
+  _trackSource(clone, actor) {
+    clone._sourceActor = actor;
+    clone._sourceGone = false;
+    clone._sourceDestroyId = actor.connect("destroy", () => {
+      clone._sourceGone = true;
+      clone._sourceDestroyId = 0;
+      clone._sourceActor = null;
+      this._dropWindowClone(clone);
+    });
+  }
+
+  _untrackSource(clone) {
+    if (clone._sourceDestroyId && !clone._sourceGone && clone._sourceActor) {
+      try {
+        clone._sourceActor.disconnect(clone._sourceDestroyId);
+      } catch (e) {
+        // already gone
+      }
+    }
+    clone._sourceDestroyId = 0;
+    clone._sourceActor = null;
+  }
+
+  _dropWindowClone(clone) {
+    const i = this._windowClones.indexOf(clone);
+    if (i >= 0) this._windowClones.splice(i, 1);
+    this._untrackSource(clone);
+    try {
+      if (this._contentGroup && clone.get_parent() === this._contentGroup)
+        this._contentGroup.remove_child(clone);
+      clone.destroy();
+    } catch (e) {
+      // already destroyed
+    }
+  }
+
+  /**
    * Initialize all clones for the scene
    */
   init() {
@@ -39,12 +82,7 @@ export class SceneCloner {
       this._bgClone = null;
     }
 
-    this._windowClones.forEach((clone) => {
-      if (clone) {
-        this._contentGroup.remove_child(clone);
-        clone.destroy();
-      }
-    });
+    for (const clone of [...this._windowClones]) this._dropWindowClone(clone);
     this._windowClones = [];
 
     if (this._panelClone) {
@@ -86,6 +124,7 @@ export class SceneCloner {
       let sourceX = 0;
       let sourceY = 0;
 
+      if (clone._sourceGone) return; // its window closed; the destroy handler drops it
       if (clone._sourceActor) {
         sourceX = clone._sourceActor.x;
         sourceY = clone._sourceActor.y;
@@ -146,16 +185,7 @@ export class SceneCloner {
     if (!this._contentGroup) return;
 
     // clean up old clones
-    this._windowClones.forEach((clone) => {
-      if (clone) {
-        try {
-          this._contentGroup.remove_child(clone);
-          clone.destroy();
-        } catch (e) {
-          // ignore cleanup errors
-        }
-      }
-    });
+    for (const clone of [...this._windowClones]) this._dropWindowClone(clone);
     this._windowClones = [];
 
     // get windows from active workspace
@@ -194,7 +224,7 @@ export class SceneCloner {
           source: actor,
           reactive: false,
         });
-        clone._sourceActor = actor;
+        this._trackSource(clone, actor);
 
         const insertIndex = this._bgClone ? 1 : 0;
         this._contentGroup.insert_child_at_index(

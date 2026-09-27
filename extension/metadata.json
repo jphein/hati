@@ -1,10 +1,14 @@
 {
-  "name": "Hati Cursor Highlighter",
-  "description": "Professional cursor highlighting for presentations and screen recording.",
-  "uuid": "hati@szymonwilczek.github.io",
-  "shell-version": ["48", "49", "50"],
+  "name": "Hati Cursor Highlighter (realm)",
+  "description": "Cursor highlighting for presentations and screen recording. Fork of Hati by Szymon Wilczek: event-driven frame loop (no idle redraws) and no disposed-window-actor access.",
+  "uuid": "hati-realm@jphein.github.io",
+  "shell-version": [
+    "48",
+    "49",
+    "50"
+  ],
   "version": 5,
-  "url": "https://github.com/szymonwilczek/hati",
+  "url": "https://github.com/jphein/hati",
   "settings-schema": "org.gnome.shell.extensions.hati",
   "donations": {
     "github": "szymonwilczek"

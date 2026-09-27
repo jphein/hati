@@ -71,6 +71,19 @@ export class Physics {
   }
 
   /**
+   * True once the highlight has caught up with the target and stopped (hati-realm: lets the
+   * frame loop sleep instead of ticking forever).
+   */
+  isSettled(targetX, targetY) {
+    return (
+      Math.abs(targetX - this._currentX) < 0.5 &&
+      Math.abs(targetY - this._currentY) < 0.5 &&
+      Math.abs(this._velocityX) < 0.05 &&
+      Math.abs(this._velocityY) < 0.05
+    );
+  }
+
+  /**
    * Returns the current position without updating
    * @returns {Array<number>} - [x, y]
    */
