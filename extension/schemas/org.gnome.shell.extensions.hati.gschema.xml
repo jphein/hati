@@ -251,7 +251,9 @@
     <key name="arcane-runes" type="b"><default>true</default><summary>Rune ring on click (distinct glyph per button)</summary></key>
     <key name="arcane-pulse" type="b"><default>true</default><summary>Arcane pulse to find the cursor on a shake</summary></key>
     <key name="realm-pulse" type="b"><default>false</default><summary>Tint the aura from realm health (opt-in)</summary></key>
-    <key name="realm-status-url" type="s"><default>"http://familiar/status"</default><summary>realmwatch status URL for the realm pulse (polled at most every 30 s)</summary></key>
+    <key name="realm-status-url" type="s"><default>"http://familiar.lan/status"</default><summary>realmwatch status URL for the realm pulse (polled at most every 30 s)</summary></key>
+    <key name="recording-auto-subtle" type="b"><default>true</default><summary>Go subtle automatically while the screen is being cast or recorded (OBS, portals)</summary></key>
+    <key name="subtle-toggle-key" type="as"><default><![CDATA[['<Super><Alt>c']]]></default><summary>Toggle subtle mode</summary></key>
     <key name="recording-subtle" type="b"><default>false</default><summary>Subtle mode: fewer, fainter arcane effects (for recording)</summary></key>
   </schema>
 </schemalist>

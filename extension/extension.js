@@ -28,6 +28,7 @@ import { AutoHide } from "./modules/auto-hide.js";
 import Indicator from "./modules/indicator.js";
 import { Spotlight } from "./modules/spotlight.js";
 import { Arcane } from "./modules/arcane.js";
+import { RealmPulse } from "./modules/realm-pulse.js";
 
 export default class HatiExtension extends Extension {
   constructor(metadata) {
@@ -176,7 +177,36 @@ export default class HatiExtension extends Extension {
 
     this._spotlight = new Spotlight(this._settings);
     this._arcane = new Arcane(this._settings, this._interfaceSettings);
-    this._arcane.setSubtle(this._settings.get_boolean("recording-subtle"));
+    this._casting = 0; // active screen-cast handles (OBS, portals)
+    this._applySubtle();
+    this._realmTint = null;
+    this._realmPulse = new RealmPulse(this._settings, (rgb) => this._setRealmTint(rgb));
+
+    // recording-friendly: Mutter creates a remote-access handle per screen cast (OBS on Wayland
+    // goes through the portal), so this is event-driven and costs nothing when nobody records.
+    try {
+      this._rac = global.backend.get_remote_access_controller();
+      this._racId = this._rac.connect("new-handle", (_c, handle) => {
+        this._casting++;
+        this._applySubtle();
+        handle.connect("stopped", () => {
+          this._casting = Math.max(0, this._casting - 1);
+          this._applySubtle();
+        });
+      });
+    } catch (e) {
+      this._rac = null;
+    }
+    // the one-key toggle
+    try {
+      Main.wm.addKeybinding("subtle-toggle-key", this._settings, Meta.KeyBindingFlags.NONE,
+        Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW, () => {
+          this._settings.set_boolean("recording-subtle", !this._settings.get_boolean("recording-subtle"));
+        });
+      this._keybound = true;
+    } catch (e) {
+      this._keybound = false;
+    }
 
     this._refreshStyle();
 
@@ -289,6 +319,15 @@ export default class HatiExtension extends Extension {
         this._arcane.destroy();
         this._arcane = null;
       }
+      if (this._realmPulse) {
+        this._realmPulse.destroy();
+        this._realmPulse = null;
+      }
+      if (this._rac && this._racId) this._rac.disconnect(this._racId);
+      this._rac = null;
+      this._racId = 0;
+      if (this._keybound) Main.wm.removeKeybinding("subtle-toggle-key");
+      this._keybound = false;
 
       if (this._autoHide) {
         this._autoHide = null;
@@ -483,8 +522,8 @@ export default class HatiExtension extends Extension {
       }
     }
 
-    if (key === "recording-subtle" && this._arcane) {
-      this._arcane.setSubtle(this._settings.get_boolean("recording-subtle"));
+    if ((key === "recording-subtle" || key === "recording-auto-subtle") && this._arcane) {
+      this._applySubtle();
     }
 
     if (key === "rgb-enabled") {
@@ -514,6 +553,27 @@ export default class HatiExtension extends Extension {
     this._canvas.queue_repaint();
 
     this._containerActor.set_opacity(255);
+  }
+
+  _applySubtle() {
+    if (!this._arcane) return;
+    const auto = this._settings.get_boolean("recording-auto-subtle") && this._casting > 0;
+    this._arcane.setSubtle(this._settings.get_boolean("recording-subtle") || auto);
+  }
+
+  // Realm pulse: tint the arcane effects, and the aura itself unless RGB mode owns its colour.
+  _setRealmTint(rgb) {
+    this._realmTint = rgb;
+    if (this._arcane) this._arcane.setTint(rgb);
+    if (!this._rgbEnabled) {
+      this._refreshStyle();
+      if (rgb && this._drawSettings && this._drawSettings.color) {
+        this._drawSettings.color.red = rgb[0];
+        this._drawSettings.color.green = rgb[1];
+        this._drawSettings.color.blue = rgb[2];
+        this._canvas?.queue_repaint();
+      }
+    }
   }
 
   _drawHighlight(area) {

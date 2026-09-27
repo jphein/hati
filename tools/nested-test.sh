@@ -12,6 +12,9 @@ set -u
 EXT=$1 UUID=$2 LABEL=$3 RGB=${4:-}
 T=$(mktemp -d /var/tmp/hati-nested.XXXXXX)
 trap 'rm -rf "$T"' EXIT
+# own runtime dir too: gnome-shell keeps its crash-guard marker (gnome-shell-disable-extensions)
+# and the Wayland socket there, and the live session must never see either
+export XDG_RUNTIME_DIR=$T/run; mkdir -p -m 700 $T/run
 export XDG_CONFIG_HOME=$T/config XDG_DATA_HOME=$T/data XDG_CACHE_HOME=$T/cache XDG_STATE_HOME=$T/state
 mkdir -p $XDG_CONFIG_HOME $XDG_CACHE_HOME $XDG_STATE_HOME $XDG_DATA_HOME/gnome-shell/extensions
 EXTS="'unsafe@hati-test'"
@@ -60,6 +63,22 @@ dbus-run-session -- bash -c "
     sleep 4; ev \"global._hatiFrames=0; 'reset'\" >/dev/null; a1=\$(awk '{print \$14+\$15}' /proc/\$SP/stat); sleep 10; a2=\$(awk '{print \$14+\$15}' /proc/\$SP/stat)
     echo \"$LABEL ticks/10s after demo (settled): \$((a2-a1))\"
     echo \"$LABEL frames/10s after demo (settled): \$(ev 'global._hatiFrames' | tail -1)\"
+  fi
+  if [ -n '${FEATURES:-}' ]; then
+    E=\"Main.extensionManager.lookup('$UUID')?.stateObj\"
+    ev \"\$E.getSettings ? 1 : 0\" >/dev/null
+    ev \"const s=\$E._settings; s.set_string('realm-status-url','${REALM_URL:-http://familiar.lan/status}'); s.set_boolean('realm-pulse', true); 'on'\" >/dev/null
+    sleep 14
+    echo \"$LABEL realm tint: \$(ev \"JSON.stringify(\$E._realmTint)\" | tail -1)  pulse=\$(ev \"String(!!\$E._realmPulse) + ' timer=' + \$E._realmPulse?._timerId + ' session=' + !!\$E._realmPulse?._session + ' err=' + \$E._realmPulse?.lastError\" | tail -1)\"
+    r1=\$(awk '{print \$14+\$15}' /proc/\$SP/stat); sleep 10; r2=\$(awk '{print \$14+\$15}' /proc/\$SP/stat)
+    echo \"$LABEL idle ticks/10s with realm pulse on: \$((r2-r1))\"
+    ev \"\$E._settings.set_boolean('realm-pulse', false); 'off'\" >/dev/null
+    gdbus call --session --dest org.gnome.Shell.Screencast --object-path /org/gnome/Shell/Screencast --method org.gnome.Shell.Screencast.Screencast $T/cast.webm {} 2>&1 | tail -1 | cut -c1-160
+    sleep 3
+    echo \"$LABEL casting=\$(ev \"\$E._casting\" | tail -1) subtle=\$(ev \"\$E._arcane._subtle\" | tail -1)\"
+    gdbus call --session --dest org.gnome.Shell.Screencast --object-path /org/gnome/Shell/Screencast --method org.gnome.Shell.Screencast.StopScreencast >/dev/null 2>&1
+    sleep 2
+    echo \"$LABEL after stop: casting=\$(ev \"\$E._casting\" | tail -1) subtle=\$(ev \"\$E._arcane._subtle\" | tail -1)\"
   fi
   # disposed-actor check: force the magnifier on, open a window, close it
   ev \"let e=Main.extensionManager.lookup('$UUID')?.stateObj; if(e&&e._magnifier){e._magnifier.pollActivation=()=>{}; e._magnifier.activate(); if(e._wake) e._wake(); 'mag on'} else 'no magnifier'\" | tail -1

@@ -7,7 +7,8 @@ const ROWS = [
   ["arcane-trail", "Spell-mote trail", "Short-lived glowing motes behind a moving cursor. Nothing while it is still."],
   ["arcane-runes", "Rune ring on click", "A gold sigil circle per click: triangle (left), pentagram (middle), diamond (right)."],
   ["arcane-pulse", "Arcane pulse", "Shake the cursor to find it: three collapsing rings."],
-  ["recording-subtle", "Subtle mode", "Fewer, fainter effects, for screen recording."],
+  ["recording-subtle", "Subtle mode", "Fewer, fainter effects, for screen recording. Toggle: Super+Alt+C."],
+  ["recording-auto-subtle", "Subtle while recording", "Automatically subtle while the screen is being cast or recorded (OBS, portals)."],
   ["realm-pulse", "Realm pulse", "Tint the aura from realm health (mysticlight / realmwatch). Off unless enabled; silent when unreachable."],
 ];
 
