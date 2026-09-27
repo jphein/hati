@@ -13,6 +13,7 @@ import { buildIdleGroup } from "./prefs/idle-group.js";
 import { buildMagnifierGroup } from "./prefs/magnifier-group.js";
 import { buildSpotlightGroup } from "./prefs/spotlight-group.js";
 import { PresetsPage } from "./prefs/presets-page.js";
+import { buildArcaneGroup } from "./prefs/arcane-group.js";
 
 export default class HatiPreferences extends ExtensionPreferences {
   fillPreferencesWindow(window) {
@@ -43,6 +44,13 @@ export default class HatiPreferences extends ExtensionPreferences {
     });
     magnifierPage.add(buildMagnifierGroup(settings));
     window.add(magnifierPage);
+
+    const arcanePage = new Adw.PreferencesPage({
+      title: "Arcane",
+      icon_name: "starred-symbolic",
+    });
+    arcanePage.add(buildArcaneGroup(settings));
+    window.add(arcanePage);
 
     const presetsPage = new PresetsPage(settings);
     window.add(presetsPage);

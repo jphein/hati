@@ -29,10 +29,12 @@ if [ "$EXT" != none ]; then
   EXTS="$EXTS, '$UUID'"
 fi
 LOG=$T/shell.log
+OUT=${OUT:-$PWD/scratch/shots}; mkdir -p $OUT
 dbus-run-session -- bash -c "
   dconf write /org/gnome/shell/disable-user-extensions false
   dconf write /org/gnome/shell/enabled-extensions \"[$EXTS]\"
   dconf write /org/gnome/shell/extensions/hati/enabled true
+  SCHEME=${SCHEME:-dark}; [ \"\$SCHEME\" = light ] && dconf write /org/gnome/desktop/interface/color-scheme \"'prefer-light'\" || dconf write /org/gnome/desktop/interface/color-scheme \"'prefer-dark'\"
   [ -n '$RGB' ] && dconf write /org/gnome/shell/extensions/hati/rgb-enabled true
   [ -n '${AUTOHIDE:-}' ] && dconf write /org/gnome/shell/extensions/hati/auto-hide ${AUTOHIDE:-true}
   gnome-shell --headless --virtual-monitor 1280x800 --wayland --no-x11 --wayland-display=wl-hati-test >$LOG 2>&1 &
@@ -44,6 +46,21 @@ dbus-run-session -- bash -c "
   t1=\$(awk '{print \$14+\$15}' /proc/\$SP/stat); sleep 10; t2=\$(awk '{print \$14+\$15}' /proc/\$SP/stat)
   echo \"$LABEL idle ticks/10s: \$((t2-t1))\"
   echo \"$LABEL idle frames/10s: \$(ev 'global._hatiFrames' | tail -1)\"
+  if [ -n '${DEMO:-}' ]; then
+    # demo: a virtual pointer draws a path, shakes, clicks all three buttons; screenshots mid-effect
+    ev \"global._hatiFrames=0; 'reset'\" >/dev/null
+    ev \"const GLib=imports.gi.GLib, C=imports.gi.Clutter; const d=C.get_default_backend().get_default_seat().create_virtual_device(C.InputDeviceType.POINTER_DEVICE); global._hatiVd=d; let i=0; const pts=[]; for(let k=0;k<40;k++) pts.push([300+k*14, 400+Math.round(80*Math.sin(k/5))]); for(let k=0;k<10;k++) pts.push([860+(k%2?-60:60), 400]); GLib.timeout_add(GLib.PRIORITY_DEFAULT, 16, ()=>{ if(i<pts.length){ d.notify_absolute_motion(GLib.get_monotonic_time(), pts[i][0], pts[i][1]); i++; return true;} const t=GLib.get_monotonic_time(); for (const b of [1,2,3]) {} return false; }); 'moving'\" >/dev/null
+    sleep 0.55
+    gdbus call --session --dest org.gnome.Shell.Screenshot --object-path /org/gnome/Shell/Screenshot --method org.gnome.Shell.Screenshot.Screenshot true false $OUT/trail-\$SCHEME.png >/dev/null 2>&1
+    sleep 0.5
+    ev \"const d=global._hatiVd, GLib=imports.gi.GLib; let b=0; const tap=()=>{ const t=GLib.get_monotonic_time(); d.notify_absolute_motion(t, 420+b*260, 620); d.notify_button(t, [1,2,3][b], 1); GLib.timeout_add(GLib.PRIORITY_DEFAULT, 60, ()=>{ d.notify_button(GLib.get_monotonic_time(), [1,2,3][b], 0); b++; if(b<3) GLib.timeout_add(GLib.PRIORITY_DEFAULT, 250, ()=>{tap(); return false;}); return false; }); }; tap(); 'clicks'\" >/dev/null
+    sleep 0.75
+    gdbus call --session --dest org.gnome.Shell.Screenshot --object-path /org/gnome/Shell/Screenshot --method org.gnome.Shell.Screenshot.Screenshot true false $OUT/runes-\$SCHEME.png >/dev/null 2>&1
+    echo \"$LABEL frames during demo: \$(ev 'global._hatiFrames' | tail -1)\"
+    sleep 4; ev \"global._hatiFrames=0; 'reset'\" >/dev/null; a1=\$(awk '{print \$14+\$15}' /proc/\$SP/stat); sleep 10; a2=\$(awk '{print \$14+\$15}' /proc/\$SP/stat)
+    echo \"$LABEL ticks/10s after demo (settled): \$((a2-a1))\"
+    echo \"$LABEL frames/10s after demo (settled): \$(ev 'global._hatiFrames' | tail -1)\"
+  fi
   # disposed-actor check: force the magnifier on, open a window, close it
   ev \"let e=Main.extensionManager.lookup('$UUID')?.stateObj; if(e&&e._magnifier){e._magnifier.pollActivation=()=>{}; e._magnifier.activate(); if(e._wake) e._wake(); 'mag on'} else 'no magnifier'\" | tail -1
   WAYLAND_DISPLAY=wl-hati-test GDK_BACKEND=wayland zenity --info --text=hati-test >/dev/null 2>&1 & Z=\$!

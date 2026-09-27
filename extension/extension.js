@@ -27,6 +27,7 @@ import { Magnifier } from "./modules/magnifier.js";
 import { AutoHide } from "./modules/auto-hide.js";
 import Indicator from "./modules/indicator.js";
 import { Spotlight } from "./modules/spotlight.js";
+import { Arcane } from "./modules/arcane.js";
 
 export default class HatiExtension extends Extension {
   constructor(metadata) {
@@ -174,6 +175,8 @@ export default class HatiExtension extends Extension {
     );
 
     this._spotlight = new Spotlight(this._settings);
+    this._arcane = new Arcane(this._settings, this._interfaceSettings);
+    this._arcane.setSubtle(this._settings.get_boolean("recording-subtle"));
 
     this._refreshStyle();
 
@@ -282,6 +285,11 @@ export default class HatiExtension extends Extension {
         this._spotlight = null;
       }
 
+      if (this._arcane) {
+        this._arcane.destroy();
+        this._arcane = null;
+      }
+
       if (this._autoHide) {
         this._autoHide = null;
       }
@@ -346,6 +354,10 @@ export default class HatiExtension extends Extension {
     if (this._spotlight) {
       this._spotlight.pollActivation(mask);
       this._spotlight.update(curX, curY);
+    }
+
+    if (this._arcane) {
+      this._arcane.update(pointerX, pointerY, mask, nowUs / 1000);
     }
 
     if (!this._clickState) {
@@ -469,6 +481,10 @@ export default class HatiExtension extends Extension {
       if (this._glow) {
         this._glow.updateConstants();
       }
+    }
+
+    if (key === "recording-subtle" && this._arcane) {
+      this._arcane.setSubtle(this._settings.get_boolean("recording-subtle"));
     }
 
     if (key === "rgb-enabled") {
