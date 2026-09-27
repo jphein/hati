@@ -11,3 +11,6 @@ dist/
 
 # system
 .DS_Store
+
+# local notes and logs
+scratch/

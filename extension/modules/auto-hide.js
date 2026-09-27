@@ -70,6 +70,18 @@ export class AutoHide {
   }
 
   /**
+   * True while the stationary countdown to hiding is still running (hati-realm: the frame loop
+   * must keep ticking until the highlight hides, then it may sleep).
+   */
+  isPending() {
+    return (
+      this._settings.get_boolean("auto-hide") &&
+      !this._hidden &&
+      this._stationaryTime < this._settings.get_int("auto-hide-delay")
+    );
+  }
+
+  /**
    * Reset state (call when extension restarts)
    */
   reset() {

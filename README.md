@@ -1,3 +1,15 @@
+# Hati (realm fork)
+
+> Fork of [szymonwilczek/hati](https://github.com/szymonwilczek/hati) with an event-driven frame loop: no idle redraws, and the RGB cycle pauses while auto-hidden. It also stops accessing disposed window actors in the magnifier. UUID `hati-realm@jphein.github.io`; it shares the original's settings.
+>
+> **Swap on a live session** (Wayland may need a logout/login before a newly installed UUID is loadable):
+> ```sh
+> make install                                            # copies to ~/.local/share/gnome-shell/extensions/hati-realm@jphein.github.io
+> gnome-extensions disable hati@szymonwilczek.github.io
+> gnome-extensions enable hati-realm@jphein.github.io     # if "does not exist": log out and in, then run it again
+> ```
+> **Back out:** `gnome-extensions disable hati-realm@jphein.github.io && gnome-extensions enable hati@szymonwilczek.github.io`
+
 <div align="center">
   <img src="assets/hati_icon.svg" width="150" height="150" alt="Hati Icon">
   <h1>Hati</h1>

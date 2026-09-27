@@ -78,6 +78,10 @@ export class Spotlight {
     );
   }
 
+  isActive() {
+    return this._active;
+  }
+
   update(x, y) {
     if (!this._enabled) return;
 
