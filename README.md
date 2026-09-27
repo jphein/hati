@@ -1,6 +1,8 @@
-# Arcane Cursor (realm.watch fork of Hati)
+# Arcane Cursor — a realm.watch cursor
 
-> Fork of [szymonwilczek/hati](https://github.com/szymonwilczek/hati) with an event-driven frame loop: no idle redraws, and the RGB cycle pauses while auto-hidden. It also stops accessing disposed window actors in the magnifier. UUID `arcane-cursor@jphein.github.io`; it shares the original's settings. **Arcane** page in the preferences: spell-mote trail, rune ring on click (triangle/pentagram/diamond for left/middle/right), arcane pulse on a shake to find the cursor, subtle mode, and an opt-in realm-health tint. Every effect is event-driven, so a still cursor costs nothing.
+> Fork of [Hati](https://github.com/szymonwilczek/hati) by szymonwilczek, GPL-3.0 (LICENSE unchanged).
+
+> What changed from upstream: an event-driven frame loop: no idle redraws, and the RGB cycle pauses while auto-hidden. It also stops accessing disposed window actors in the magnifier. UUID `arcane-cursor@jphein.github.io`, with its own settings (`org.gnome.shell.extensions.arcane-cursor`). On first enable it copies your Hati settings once, read-only. **Arcane** page in the preferences: spell-mote trail, rune ring on click (triangle/pentagram/diamond for left/middle/right), arcane pulse on a shake to find the cursor, subtle mode, and an opt-in realm-health tint. Every effect is event-driven, so a still cursor costs nothing.
 >
 > **Swap on a live session** (Wayland may need a logout/login before a newly installed UUID is loadable):
 > ```sh
@@ -10,97 +12,25 @@
 > ```
 > **Back out:** `gnome-extensions disable arcane-cursor@jphein.github.io && gnome-extensions enable hati@szymonwilczek.github.io`
 
-<div align="center">
-  <img src="assets/hati_icon.svg" width="150" height="150" alt="Hati Icon">
-  <h1>Hati</h1>
-  <p><strong>Native cursor highlighter for GNOME Shell on Wayland.</strong></p>
-
-  <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-GPL--3.0-green?style=flat-square" alt="License">
-  </a>
-  <a href="https://wayland.freedesktop.org">
-    <img src="https://img.shields.io/badge/Platform-Wayland-orange?style=flat-square" alt="Wayland">
-  </a>
-</div>
-
-<br>
-
-## Overview
-
-**Hati** is a GNOME Shell extension designed to solve a specific problem: demonstrating software on Wayland. Traditional X11 overlay tools often fail or introduce lag on Wayland compositors. Hati integrates directly into the GNOME Shell rendering pipeline using GLSL shaders, ensuring zero latency and perfect frame synchronization.
-
-It provides a highly customizable visual ring around your cursor, essential for:
-- **Teaching / Lectures**
-- **Screen Recording**
-- **Live Demonstrations**
-- **Accessibility**
-
-## Preview
-
-https://github.com/user-attachments/assets/778d996f-08ca-45d9-92bc-cc9d4ac6312a
-
 ## Features
+- **Aura**: Hati's cursor highlight (shapes, glow, RGB cycle, magnifier, spotlight, auto-hide), now on an event-driven frame loop, so a still cursor costs nothing.
+- **Spell-mote trail**: gold and violet motes behind a moving cursor, fading within 400 ms.
+- **Rune ring on click**: a gold sigil circle per click, with a triangle, pentagram or diamond for the left, middle or right button.
+- **Arcane pulse**: shake the cursor to find it.
+- **Realm pulse** (opt-in): the aura is tinted from realmwatch health, green → ember → red.
+- **Subtle mode**: Super+Alt+C, and automatic while the screen is being cast or recorded.
+- Palette: old gold, deep violet, ember, moonlight silver; follows the system light/dark style.
 
-| Category | Description |
-|----------|-------------|
-| **Performance** | **Memory:** ~2-3MB. **Render Time:** ~4.7ms/frame. **Zero Copy** tracking. |
-| **Visuals** | Dual-ring design (Solid/Dashed), Corner Radius (Squircle/Circle), dynamic Glow effects. |
-| **Interaction** | Visual feedback for clicks: **Pulse**, **Ripple**, **Glow Burst**. Distinct Left/Right click colors. |
-| **Utilities** | **Spotlight Mode** (dim screen except cursor), **GPU Magnifier** (instant zoom). Customizable shortcuts. |
-| **Config** | Changes apply instantly. **Shareable Presets** (Import/Export JSON). Native GTK4 preferences window. |
-
-## Installation
-
-### Method 1: GNOME Extensions Website
-
-Install via GNOME Extensions: [Hati Cursor Highlighter](https://extensions.gnome.org/extension/9209/hati-cursor-highlighter/).
-
-### Method 2: Manual Installation
-1. Download the latest release from [Releases](https://github.com/szymonwilczek/hati/releases).
-2. Install via CLI:
-   ```bash
-   gnome-extensions install hati@szymonwilczek.github.io.zip
-   ```
-3. Restart GNOME Shell (Log out/in on Wayland).
-4. Enable the extension:
-   ```bash
-   gnome-extensions enable hati@szymonwilczek.github.io
-   ```
-
-### Method 3: Build from Source
-
-You'll need following dependencies: 
-- `make`
-- `zip`
-
-```bash
-# Clone repository
-git clone https://github.com/szymonwilczek/hati.git
-cd hati
-
-# Build and install
-make install
+## Install
+```sh
+make install        # → ~/.local/share/gnome-shell/extensions/arcane-cursor@jphein.github.io (schemas compiled)
 ```
+Log out and in on Wayland, then `gnome-extensions enable arcane-cursor@jphein.github.io`. Preferences: `gnome-extensions prefs arcane-cursor@jphein.github.io`.
 
-#### Alternative: Shell Script (No Make required)
-If you don't have `make` installed, you can use the provided script:
-```bash
-./scripts/install.sh
-```
+## Test (never on a live session)
+- `tools/nested-test.sh <ext-dir> <uuid> <label> [rgb]` runs a headless gnome-shell on its own bus, with its own runtime and XDG dirs. It measures idle ticks and frames, plus disposed errors.
+- `DEMO=1` adds a virtual-pointer demo with screenshots; `FEATURES=1` adds the realm pulse and screencast checks; `MIGRATE=1` exercises the one-time settings copy.
+- `tools/nested-view.sh` opens a visible nested window.
 
-## Configuration
-
-Settings can be accessed via the **Extensions** app or by right-clicking the extension icon if enabled. 
-
-- **Appearance:** Shape (Circle/Square), Size, Colors, Opacity, Border Weight.
-- **Behavior:** Auto-hide timeout, Inertia physics sliders.
-- **Utilities:** Spotlight configuration, Magnifier zoom level & keys.
-- **Presets:** Built-in collections, **Import/Export** functionality to share configs.
-
-## Contributing
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-## License
-
-[GPL-3.0](LICENSE)
+## Credit
+Arcane Cursor is a fork of [Hati](https://github.com/szymonwilczek/hati) by Szymon Wilczek, licensed GPL-3.0-or-later; see LICENSE, unchanged. The aura, magnifier, spotlight and presets are his work.

@@ -9,7 +9,7 @@
   ],
   "version": 5,
   "url": "https://github.com/jphein/hati",
-  "settings-schema": "org.gnome.shell.extensions.hati",
+  "settings-schema": "org.gnome.shell.extensions.arcane-cursor",
   "donations": {
     "github": "szymonwilczek"
   }

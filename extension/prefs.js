@@ -13,9 +13,9 @@ import { buildIdleGroup } from "./prefs/idle-group.js";
 import { buildMagnifierGroup } from "./prefs/magnifier-group.js";
 import { buildSpotlightGroup } from "./prefs/spotlight-group.js";
 import { PresetsPage } from "./prefs/presets-page.js";
-import { buildArcaneGroup } from "./prefs/arcane-group.js";
+import { buildArcaneGroup, buildRealmHeader } from "./prefs/arcane-group.js";
 
-export default class HatiPreferences extends ExtensionPreferences {
+export default class ArcanePreferences extends ExtensionPreferences {
   fillPreferencesWindow(window) {
     const settings = this.getSettings();
 
@@ -23,6 +23,7 @@ export default class HatiPreferences extends ExtensionPreferences {
       title: "Appearance",
       icon_name: "preferences-desktop-appearance-symbolic",
     });
+    appearancePage.add(buildRealmHeader(this.metadata));
     appearancePage.add(buildCoreGroup(settings));
     appearancePage.add(buildColorsGroup(settings));
     appearancePage.add(buildStylingGroup(settings));

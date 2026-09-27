@@ -21,7 +21,7 @@ export class SceneCloner {
   }
 
   /**
-   * hati-realm: a window clone watches its source actor. When the window closes, Mutter disposes
+   * Arcane Cursor: a window clone watches its source actor. When the window closes, Mutter disposes
    * the MetaWindowActor; upstream kept the clone (and `_sourceActor`) until the next 500 ms
    * rebuild and read `.x`/`.y` from the disposed actor every frame ("MetaWindowActorWayland …
    * has been already disposed", scene-cloner.js:90). Now the clone is dropped on the source's
@@ -158,7 +158,7 @@ export class SceneCloner {
         }
       }
     } catch (e) {
-      console.log(`[Hati SceneCloner] bgManagers failed: ${e}`);
+      console.log(`[Arcane SceneCloner] bgManagers failed: ${e}`);
     }
 
     // fallback to backgroundGroup
@@ -177,7 +177,7 @@ export class SceneCloner {
         }
       }
     } catch (e) {
-      console.log(`[Hati SceneCloner] backgroundGroup failed: ${e}`);
+      console.log(`[Arcane SceneCloner] backgroundGroup failed: ${e}`);
     }
   }
 
@@ -194,7 +194,7 @@ export class SceneCloner {
       const workspace = global.workspace_manager.get_active_workspace();
       windows = workspace.list_windows();
     } catch (e) {
-      console.log(`[Hati SceneCloner] Failed to get windows: ${e}`);
+      console.log(`[Arcane SceneCloner] Failed to get windows: ${e}`);
       return;
     }
 
@@ -235,7 +235,7 @@ export class SceneCloner {
         this._windowClones.push(clone);
       } catch (e) {
         // skip windows that fail to clone
-        console.log(`[Hati SceneCloner] Skipping window: ${e.message}`);
+        console.log(`[Arcane SceneCloner] Skipping window: ${e.message}`);
       }
     }
   }

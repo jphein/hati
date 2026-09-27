@@ -33,18 +33,24 @@ if [ "$EXT" != none ]; then
 fi
 LOG=$T/shell.log
 OUT=${OUT:-$PWD/scratch/shots}; mkdir -p $OUT
+# settings path: upstream and hati-realm use /hati/; Arcane Cursor has its own (it migrates /hati/
+# once, which MIGRATE=1 exercises by seeding /hati/ instead)
+case "$UUID" in arcane-cursor@*) SPATH=arcane-cursor;; *) SPATH=hati;; esac
+[ -n "${MIGRATE:-}" ] && SPATH=hati
 dbus-run-session -- bash -c "
+  SP_PATH=$SPATH
   dconf write /org/gnome/shell/disable-user-extensions false
   dconf write /org/gnome/shell/enabled-extensions \"[$EXTS]\"
-  dconf write /org/gnome/shell/extensions/hati/enabled true
+  dconf write /org/gnome/shell/extensions/\$SP_PATH/enabled true
   SCHEME=${SCHEME:-dark}; [ \"\$SCHEME\" = light ] && dconf write /org/gnome/desktop/interface/color-scheme \"'prefer-light'\" || dconf write /org/gnome/desktop/interface/color-scheme \"'prefer-dark'\"
-  [ -n '$RGB' ] && dconf write /org/gnome/shell/extensions/hati/rgb-enabled true
-  [ -n '${AUTOHIDE:-}' ] && dconf write /org/gnome/shell/extensions/hati/auto-hide ${AUTOHIDE:-true}
+  [ -n '$RGB' ] && dconf write /org/gnome/shell/extensions/\$SP_PATH/rgb-enabled true
+  [ -n '${AUTOHIDE:-}' ] && dconf write /org/gnome/shell/extensions/\$SP_PATH/auto-hide ${AUTOHIDE:-true}
   gnome-shell --headless --virtual-monitor 1280x800 --wayland --no-x11 --wayland-display=wl-hati-test >$LOG 2>&1 &
   SP=\$!; echo \$SP > $T/pid
   sleep 12
   ev() { gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell --method org.gnome.Shell.Eval \"\$1\" 2>&1; }
   echo \"loaded: \$(ev \"Main.extensionManager.lookup('$UUID')?.state ?? 'none'\")\"
+  echo \"settings: \$(ev \"const x=Main.extensionManager.lookup('$UUID')?.stateObj?._settings; x ? 'rgb=' + x.get_boolean('rgb-enabled') + ' migrated=' + (x.settings_schema.has_key('migrated-from-hati') ? x.get_boolean('migrated-from-hati') : 'n/a') + ' schema=' + x.schema_id : 'none'\" | tail -1)\"
   ev \"global._hatiFrames=0; global.stage.connect('after-paint',()=>global._hatiFrames++); 'counting'\" >/dev/null
   t1=\$(awk '{print \$14+\$15}' /proc/\$SP/stat); sleep 10; t2=\$(awk '{print \$14+\$15}' /proc/\$SP/stat)
   echo \"$LABEL idle ticks/10s: \$((t2-t1))\"

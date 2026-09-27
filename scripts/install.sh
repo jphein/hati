@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-EXTENSION_UUID="hati@szymonwilczek.github.io"
+EXTENSION_UUID="arcane-cursor@jphein.github.io"
 INSTALL_DIR="$HOME/.local/share/gnome-shell/extensions/$EXTENSION_UUID"
 SOURCE_DIR="$(dirname "$0")/../extension"
 
-echo "🐺 Installing Hati..."
+echo "✦ Installing Arcane Cursor (realm.watch)..."
 rm -rf "$INSTALL_DIR"
 mkdir -p "$INSTALL_DIR"
 cp -r "$SOURCE_DIR"/* "$INSTALL_DIR/"
@@ -18,6 +18,6 @@ else
     echo "⚠️ glib-compile-schemas not found. You may need to install libglib2.0-bin or similar."
 fi
 
-echo "✅ Hati installed successfully!"
+echo "✅ Arcane Cursor installed."
 echo "🔄 Please restart GNOME Shell: log out/in (Wayland)."
 echo "👉 Then enable with: gnome-extensions enable $EXTENSION_UUID"

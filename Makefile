@@ -11,6 +11,7 @@ all: install
 # targets
 install:
 	@echo "📦 Installing extension locally..."
+	@rm -rf ~/.local/share/gnome-shell/extensions/$(EXTENSION_UUID)
 	@mkdir -p ~/.local/share/gnome-shell/extensions/$(EXTENSION_UUID)
 	@cp -r $(EXTENSION_DIR)/* ~/.local/share/gnome-shell/extensions/$(EXTENSION_UUID)/
 	@glib-compile-schemas ~/.local/share/gnome-shell/extensions/$(EXTENSION_UUID)/schemas/

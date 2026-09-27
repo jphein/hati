@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Arcane Cursor (realm.watch): the fantasy layer on top of Hati's highlight.
+// Arcane Cursor (realm.watch): the fantasy layer on top of the aura (from Hati).
 //   - spell-mote trail: short-lived motes behind a MOVING cursor (none while still), pooled, capped
 //   - rune ring: a thin sigil circle per click; left, middle and right draw distinct glyphs
 //   - arcane pulse: "find my cursor" rings on a shake
-// Everything is event-driven: emission happens only inside Hati's frame tick (which runs only
+// Everything is event-driven: emission happens only inside the frame tick (which runs only
 // while something moves), and each effect is a Clutter ease that ends and stops asking for frames.
 // Nothing here polls or keeps a timer alive when the cursor is still.
 
@@ -82,7 +82,7 @@ export class Arcane {
     global.stage.set_child_above_sibling(this._layer, null);
   }
 
-  // Called from Hati's frame tick only (so only while something moves).
+  // Called from the frame tick only (so only while something moves).
   update(x, y, mask, nowMs) {
     // clicks: one rune per press edge, per button
     for (const [bit, name] of BTN) {

@@ -71,7 +71,7 @@ export class Physics {
   }
 
   /**
-   * True once the highlight has caught up with the target and stopped (hati-realm: lets the
+   * True once the highlight has caught up with the target and stopped (Arcane Cursor: lets the
    * frame loop sleep instead of ticking forever).
    */
   isSettled(targetX, targetY) {

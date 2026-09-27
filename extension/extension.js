@@ -42,11 +42,12 @@ export default class HatiExtension extends Extension {
   }
 
   async enable() {
-    console.log("[Hati] Enabling cursor highlighter...");
+    console.log("[Arcane] Enabling cursor highlighter...");
 
     await initShaders(this.path);
 
     this._settings = this.getSettings();
+    this._migrateFromHati();
     this._interfaceSettings = new Gio.Settings({
       schema_id: "org.gnome.desktop.interface",
     });
@@ -73,7 +74,7 @@ export default class HatiExtension extends Extension {
     this._indicator = new Indicator(this.path, this._settings, () => {
       this.openPreferences();
     });
-    Main.panel.addToStatusArea("hati", this._indicator);
+    Main.panel.addToStatusArea("arcane-cursor", this._indicator);
 
     // only proceed if enabled
     if (!this._settings.get_boolean("enabled")) {
@@ -85,11 +86,11 @@ export default class HatiExtension extends Extension {
 
     this._createHighlightActor();
 
-    console.log("[Hati] Enabled successfully");
+    console.log("[Arcane] Enabled successfully");
   }
 
   disable() {
-    console.log("[Hati] Disabling cursor highlighter...");
+    console.log("[Arcane] Disabling cursor highlighter...");
 
     if (this._indicator) {
       this._indicator.destroy();
@@ -115,7 +116,7 @@ export default class HatiExtension extends Extension {
       this._interfaceSettings = null;
     }
 
-    console.log("[Hati] Disabled successfully");
+    console.log("[Arcane] Disabled successfully");
   }
 
   _createHighlightActor() {
@@ -215,7 +216,7 @@ export default class HatiExtension extends Extension {
     this._startFrameLoop();
   }
 
-  // hati-realm: event-driven updates instead of a perpetual 16 ms GLib tick.
+  // Arcane Cursor: event-driven updates instead of a perpetual 16 ms GLib tick.
   // The physics/animation step runs on the stage frame clock (a Clutter.Timeline bound to our
   // actor) only while something is moving, and stops as soon as the state settles. Upstream's
   // unconditional timeout moved the actor 60 times a second forever, so the compositor redrew the
@@ -279,6 +280,49 @@ export default class HatiExtension extends Extension {
     }
     this._cursorTracker = null;
     this._cursorMovedId = 0;
+  }
+
+  // One-time, read-only migration: if our own path (/org/gnome/shell/extensions/arcane-cursor/) has
+  // never been written, copy JP's upstream Hati values (/org/gnome/shell/extensions/hati/) for every
+  // key we share. `dconf dump` runs asynchronously, so enabling never waits on it; the old path is
+  // only read.
+  _migrateFromHati() {
+    const s = this._settings;
+    if (s.get_boolean("migrated-from-hati")) return;
+    const keys = s.settings_schema.list_keys();
+    if (keys.some((k) => k !== "migrated-from-hati" && s.get_user_value(k) !== null)) {
+      s.set_boolean("migrated-from-hati", true); // ours already has values: never overwrite them
+      return;
+    }
+    try {
+      const proc = Gio.Subprocess.new(
+        ["dconf", "dump", "/org/gnome/shell/extensions/hati/"],
+        Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_SILENCE,
+      );
+      proc.communicate_utf8_async(null, null, (p, res) => {
+        try {
+          const [, out] = p.communicate_utf8_finish(res);
+          let copied = 0;
+          for (const line of (out || "").split("\n")) {
+            const m = line.match(/^([a-z0-9-]+)=(.*)$/);
+            if (!m || !keys.includes(m[1]) || m[1] === "migrated-from-hati") continue;
+            try {
+              const type = s.settings_schema.get_key(m[1]).get_value_type();
+              s.set_value(m[1], GLib.Variant.parse(type, m[2], null, null));
+              copied++;
+            } catch (e) {
+              // a value that no longer parses for our schema: keep our default
+            }
+          }
+          console.log(`[Arcane] migrated ${copied} settings from Hati`);
+        } catch (e) {
+          // dconf unavailable: keep defaults
+        }
+        s.set_boolean("migrated-from-hati", true);
+      });
+    } catch (e) {
+      s.set_boolean("migrated-from-hati", true);
+    }
   }
 
   _updatePhysicsConstants() {
@@ -462,7 +506,7 @@ export default class HatiExtension extends Extension {
       this._containerActor.set_position(px, py);
     }
 
-    // hati-realm: an auto-hidden highlight is invisible (opacity 0), so cycling its hue is a
+    // Arcane Cursor: an auto-hidden highlight is invisible (opacity 0), so cycling its hue is a
     // 60 Hz Cairo repaint nobody sees. On katana (rgb-enabled, size 200, glow 100) that was the
     // idle cost. Resume the cycle on the next wake, when auto-hide shows it again.
     const hidden = this._autoHide && this._autoHide.isHidden();
