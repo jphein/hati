@@ -40,9 +40,15 @@ export function buildRealmHeader(metadata) {
   box.append(title);
   box.append(sub);
   group.add(box);
+  return group;
+}
+
+// About, at the foot of the Arcane page: realm.watch and the upstream credit.
+export function buildAboutGroup(metadata) {
+  const group = new Adw.PreferencesGroup({ title: "About" });
   const about = new Adw.ActionRow({
-    title: "About",
-    subtitle: `realm.watch · version ${metadata?.version ?? "?"} · fork of Hati by szymonwilczek (GPL-3.0)`,
+    title: "realm.watch",
+    subtitle: `Arcane Cursor · version ${metadata?.version ?? "?"} · fork of Hati by szymonwilczek (GPL-3.0)`,
     activatable: true,
   });
   about.add_suffix(new Gtk.Image({ icon_name: "adw-external-link-symbolic" }));

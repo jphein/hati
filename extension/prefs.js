@@ -13,7 +13,7 @@ import { buildIdleGroup } from "./prefs/idle-group.js";
 import { buildMagnifierGroup } from "./prefs/magnifier-group.js";
 import { buildSpotlightGroup } from "./prefs/spotlight-group.js";
 import { PresetsPage } from "./prefs/presets-page.js";
-import { buildArcaneGroup, buildRealmHeader } from "./prefs/arcane-group.js";
+import { buildArcaneGroup, buildRealmHeader, buildAboutGroup } from "./prefs/arcane-group.js";
 
 export default class ArcanePreferences extends ExtensionPreferences {
   fillPreferencesWindow(window) {
@@ -51,6 +51,7 @@ export default class ArcanePreferences extends ExtensionPreferences {
       icon_name: "starred-symbolic",
     });
     arcanePage.add(buildArcaneGroup(settings));
+    arcanePage.add(buildAboutGroup(this.metadata));
     window.add(arcanePage);
 
     const presetsPage = new PresetsPage(settings);

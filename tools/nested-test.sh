@@ -86,6 +86,13 @@ dbus-run-session -- bash -c "
     sleep 2
     echo \"$LABEL after stop: casting=\$(ev \"\$E._casting\" | tail -1) subtle=\$(ev \"\$E._arcane._subtle\" | tail -1)\"
   fi
+  if [ -n '${PREFS:-}' ]; then
+    ev \"Main.extensionManager.openExtensionPrefs('$UUID', '', {}); 'prefs'\" >/dev/null; sleep 8
+    echo \"$LABEL windows: \$(ev \"JSON.stringify(global.display.list_all_windows().map(w=>w.get_title()))\" | tail -1)\"
+    gdbus call --session --dest org.gnome.Shell.Screenshot --object-path /org/gnome/Shell/Screenshot --method org.gnome.Shell.Screenshot.Screenshot false false $OUT/prefs-\$SCHEME.png >/dev/null 2>&1
+    echo \"$LABEL prefs errors: \$(grep -ciE 'JS ERROR|TypeError|SyntaxError|ReferenceError' $LOG)\"
+    grep -iE -A3 'JS ERROR|TypeError|SyntaxError|ReferenceError' $LOG | head -8
+  fi
   # disposed-actor check: force the magnifier on, open a window, close it
   ev \"let e=Main.extensionManager.lookup('$UUID')?.stateObj; if(e&&e._magnifier){e._magnifier.pollActivation=()=>{}; e._magnifier.activate(); if(e._wake) e._wake(); 'mag on'} else 'no magnifier'\" | tail -1
   WAYLAND_DISPLAY=wl-hati-test GDK_BACKEND=wayland zenity --info --text=hati-test >/dev/null 2>&1 & Z=\$!
